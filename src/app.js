@@ -158,6 +158,29 @@ app.post('/status', async (request, response) => {
   }
 });
 
+app.delete('/messages/:id', async (request, response) => {
+  const { user } = request.headers;
+  const { id } = request.params;
+
+  try {
+    const message = await db.collection('messages').findOne({ _id: new ObjectId(id) });
+    if (!message) {
+      return response.sendStatus(404);
+    }
+
+    if (message.from == !user) {
+      return response.sendStatus(401);
+    }
+
+    await db.collection('messages').deleteOne({ _id: new ObjectId(id) });
+    response.sendStatus(200);
+
+  } catch (error) {
+    console.error(error);
+    response.sendStatus(500);
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor ${chalk.bgGreen(chalk.black(' ON '))} - Porta ${chalk.magenta(port)} - ${chalk.blue(`http://localhost:${port}`)}`);
 });
