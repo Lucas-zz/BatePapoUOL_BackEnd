@@ -14,20 +14,16 @@ const port = 5000;
 app.use(cors());
 app.use(json());
 
-let onlineUsersArray = [];
-let onlineUsersList = onlineUsersArray.map(user => user.name);
-
 const time = dayjs().format('HH:mm:ss');
+
+const messageSchema = joi.object({
+  to: joi.string().required(),
+  text: joi.string().required(),
+  type: joi.valid('message', 'private_message').required(),
+});
 
 const participantSchema = joi.object({
   name: joi.string().required(),
-});
-
-const messageSchema = joi.object({
-  from: joi.string().valid(...onlineUsersList).required(),
-  to: joi.string().required(),
-  text: joi.string().required(),
-  text: joi.valid('message', 'private_message').required()
 });
 
 const mongoClient = new MongoClient(process.env.MONGO_URI);
@@ -37,20 +33,20 @@ mongoClient.connect(() => {
 });
 
 app.post('/participants', async (request, response) => {
+  const { name } = request.body;
+
+  const validation = participantSchema.validate(request.body, { abortEarly: false });
+
+  if (validation.error) {
+    return response.status(422).send(validation.error.details.map(error => error.message));
+  }
+
   try {
-    const { name } = request.body;
     const isRegistered = await db.collection('participants').findOne({ name: name });
 
     if (isRegistered) {
       return response.status(409).send("Nome já existe. Por favor, escolha outro.")
     }
-
-    const validation = participantSchema.validate(request.body, { abortEarly: false });
-
-    if (validation.error) {
-      return response.status(422).send(validation.error.details.map(error => error.message));
-    }
-
 
     await db.collection('participants').insertOne({
       name: name,
@@ -61,14 +57,9 @@ app.post('/participants', async (request, response) => {
       from: name,
       to: "Todos",
       text: "entra na sala...",
-      type: "message",
+      type: "status",
       time: time
     });
-
-    onlineUsersArray.push({
-      name: name,
-      lastStatus: Date.now()
-    })
 
     response.sendStatus(201);
   } catch (error) {
@@ -80,7 +71,7 @@ app.post('/participants', async (request, response) => {
 app.get('/participants', async (request, response) => {
   try {
     const participants = await db.collection('participants').find().toArray();
-    response.send(participants);
+    response.status(200).send(participants);
   } catch (error) {
     console.error(error);
     response.sendStatus(500);
@@ -88,27 +79,34 @@ app.get('/participants', async (request, response) => {
 });
 
 app.post('/messages', async (request, response) => {
+  const message = request.body;
+  const { from } = request.header('User');
+
+  const validation = messageSchema.validate({ from, ...message }, { abortEarly: false });
+
+  if (validation.error) {
+    return response.status(422).send(validation.error.details.map(error => error.message));
+  }
+
   try {
-    const message = request.body;
-    const { from } = request.header('User');
-
-    const validation = messageSchema.validate({ from, ...message }, { abortEarly: false });
-
-    if (validation.error) {
-      return response.status(422).send(validation.error.details.map(error => error.message));
+    const isOnline = await db.collection('participants').findOne({ name: from });
+    if (!isOnline) {
+      return response.sendStatus(422);
     }
 
-    await db.collection('messages').insertOne({ from: from, ...message });
+    await db.collection('participants').updateOne({ name: from }, { $set: { lastStatus: Date.now() } });
 
-    // preciso atualizar o lastStatus do usuário 
-    // tanto no banco quanto no onlineUsersArray
+    await db.collection('messages').insertOne({
+      from: from,
+      ...message,
+      time: time
+    });
 
     response.sendStatus(201);
   } catch (error) {
     console.error(error);
     response.sendStatus(500);
   }
-
 });
 
 app.get('/messages', async (request, response) => {
@@ -124,7 +122,6 @@ app.get('/messages', async (request, response) => {
     response.sendStatus(500);
   }
 });
-
 
 app.listen(port, () => {
   console.log(`Servidor ${chalk.bgGreen(chalk.black(' ON '))} - Porta ${chalk.magenta(port)} - ${chalk.blue(`http://localhost:${port}`)}`);
