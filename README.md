@@ -2,7 +2,7 @@
 
 # BatePapoUOL_BackEnd
 
-Primeiro projeto ```backend```, construindo a API usada no projeto do Bate Papo UOL!
+Primeiro projeto ```backend```, construindo a API usada no projeto do [Bate Papo UOL](https://github.com/Lucas-zz/front-bate-papo-uol)!
 
 ## Table of Contents
 
