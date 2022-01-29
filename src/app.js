@@ -45,7 +45,7 @@ app.post('/participants', async (request, response) => {
     const isRegistered = await db.collection('participants').findOne({ name: name });
 
     if (isRegistered) {
-      return response.status(409).send("Nome já existe. Por favor, escolha outro.")
+      return response.sendStatus(409);
     }
 
     await db.collection('participants').insertOne({
@@ -82,24 +82,23 @@ app.get('/participants', async (request, response) => {
 
 app.post('/messages', async (request, response) => {
   const message = request.body;
-  const { from } = request.header('User');
-
-  const validation = messageSchema.validate({ from, ...message }, { abortEarly: false });
-
-  if (validation.error) {
-    return response.status(422).send(validation.error.details.map(error => error.message));
-  }
+  const { user } = request.headers;
 
   try {
-    const isOnline = await db.collection('participants').findOne({ name: from });
+    const isOnline = await db.collection('participants').findOne({ name: user });
     if (!isOnline) {
       return response.sendStatus(422);
     }
 
-    await db.collection('participants').updateOne({ name: from }, { $set: { lastStatus: Date.now() } });
+    const validation = messageSchema.validate(message, { abortEarly: false });
+    if (validation.error) {
+      return response.status(422).send(validation.error.details.map(error => error.message));
+    }
+
+    await db.collection('participants').updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
 
     await db.collection('messages').insertOne({
-      from: from,
+      from: user,
       ...message,
       time: time
     });
@@ -113,19 +112,46 @@ app.post('/messages', async (request, response) => {
 });
 
 app.get('/messages', async (request, response) => {
-  const user = request.header('User');
-  const limit = parseInt(request.header('limit'));
+  const { user } = request.headers;
+  const limit = parseInt(request.header.limit);
 
   try {
+
     const messages = await db.collection('messages').find().toArray();
+
     const filteredMessages = messages.filter(message => message.from === user || message.to === user || message.to === 'Todos');
 
     if (limit === undefined) {
       return response.status(200).send(filteredMessages);
     }
 
-    limitedMessages = filteredMessages.slice(filteredMessages.length - limit, filteredMessages.length);
+    let limitedMessages = filteredMessages.slice(filteredMessages.length - limit, filteredMessages.length);
     response.status(200).send(limitedMessages);
+
+  } catch (error) {
+    console.error(error);
+    response.sendStatus(500);
+  }
+});
+
+app.post('/status', async (request, response) => {
+
+  try {
+    const participants = await db.collection('participants').find({}).toArray();
+
+    participants.forEach(async participant => {
+      if (Date.now() - participant.lastStatus > 10000) {
+        await db.collection('messages').insertOne({
+          from: participant.name,
+          to: "Todos",
+          text: "sai da sala...",
+          type: "status",
+          time: time
+        })
+        await db.collection('participants').deleteOne({ _id: participant._id });
+      }
+    });
+    response.sendStatus(200);
 
   } catch (error) {
     console.error(error);
