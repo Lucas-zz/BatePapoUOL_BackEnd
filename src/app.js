@@ -87,6 +87,44 @@ app.get('/participants', async (request, response) => {
   }
 });
 
+app.post('/messages', async (request, response) => {
+  try {
+    const message = request.body;
+    const { from } = request.header('User');
+
+    const validation = messageSchema.validate({ from, ...message }, { abortEarly: false });
+
+    if (validation.error) {
+      return response.status(422).send(validation.error.details.map(error => error.message));
+    }
+
+    await db.collection('messages').insertOne({ from: from, ...message });
+
+    // preciso atualizar o lastStatus do usuário 
+    // tanto no banco quanto no onlineUsersArray
+
+    response.sendStatus(201);
+  } catch (error) {
+    console.error(error);
+    response.sendStatus(500);
+  }
+
+});
+
+app.get('/messages', async (request, response) => {
+
+  // ainda preciso pegar a length provida da URL para pode monstrar
+  // uma quantidade específica de mensagens. Se não houver, mostrar tudo
+
+  try {
+    const messages = await db.collection('messages').find().toArray();
+    response.send(messages);
+  } catch (error) {
+    console.error(error);
+    response.sendStatus(500);
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Servidor ${chalk.bgGreen(chalk.black(' ON '))} - Porta ${chalk.magenta(port)} - ${chalk.blue(`http://localhost:${port}`)}`);
