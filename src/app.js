@@ -1,5 +1,6 @@
 import express, { json } from 'express';
 import { MongoClient, ObjectId } from 'mongodb';
+import { stripHtml } from 'string-strip-html';
 import cors from 'cors';
 import dayjs from 'dayjs';
 import joi from 'joi';
@@ -13,8 +14,6 @@ const port = 5000;
 
 app.use(cors());
 app.use(json());
-
-const time = dayjs().format('HH:mm:ss');
 
 const participantSchema = joi.object({
   name: joi.string().required(),
@@ -49,16 +48,16 @@ app.post('/participants', async (request, response) => {
     }
 
     await db.collection('participants').insertOne({
-      name: name,
+      name: stripHtml(name).result.trim(),
       lastStatus: Date.now()
     });
 
     await db.collection('messages').insertOne({
-      from: name,
+      from: stripHtml(name).result.trim(),
       to: "Todos",
       text: "entra na sala...",
       type: "status",
-      time: time
+      time: dayjs().format('HH:mm:ss')
     });
 
     response.sendStatus(201);
@@ -81,7 +80,7 @@ app.get('/participants', async (request, response) => {
 });
 
 app.post('/messages', async (request, response) => {
-  const message = request.body;
+  const { to, text, type } = request.body;
   const { user } = request.headers;
 
   try {
@@ -90,7 +89,7 @@ app.post('/messages', async (request, response) => {
       return response.sendStatus(422);
     }
 
-    const validation = messageSchema.validate(message, { abortEarly: false });
+    const validation = messageSchema.validate(request.body, { abortEarly: false });
     if (validation.error) {
       return response.status(422).send(validation.error.details.map(error => error.message));
     }
@@ -98,9 +97,11 @@ app.post('/messages', async (request, response) => {
     await db.collection('participants').updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
 
     await db.collection('messages').insertOne({
-      from: user,
-      ...message,
-      time: time
+      from: stripHtml(user).result.trim(),
+      to: stripHtml(to).result.trim(),
+      text: stripHtml(text).result.trim(),
+      type: stripHtml(type).result.trim(),
+      time: dayjs().format('HH:mm:ss')
     });
 
     response.sendStatus(201);
@@ -116,7 +117,6 @@ app.get('/messages', async (request, response) => {
   const limit = parseInt(request.header.limit);
 
   try {
-
     const messages = await db.collection('messages').find().toArray();
 
     const filteredMessages = messages.filter(message => message.from === user || message.to === user || message.to === 'Todos');
@@ -135,7 +135,6 @@ app.get('/messages', async (request, response) => {
 });
 
 app.post('/status', async (request, response) => {
-
   try {
     const participants = await db.collection('participants').find({}).toArray();
 
@@ -146,7 +145,7 @@ app.post('/status', async (request, response) => {
           to: "Todos",
           text: "sai da sala...",
           type: "status",
-          time: time
+          time: dayjs().format('HH:mm:ss')
         })
         await db.collection('participants').deleteOne({ _id: participant._id });
       }
