@@ -71,6 +71,7 @@ app.post('/participants', async (request, response) => {
 app.get('/participants', async (request, response) => {
   try {
     const participants = await db.collection('participants').find().toArray();
+
     response.status(200).send(participants);
 
   } catch (error) {
@@ -85,11 +86,13 @@ app.post('/messages', async (request, response) => {
 
   try {
     const isOnline = await db.collection('participants').findOne({ name: user });
+
     if (!isOnline) {
       return response.sendStatus(422);
     }
 
     const validation = messageSchema.validate(request.body, { abortEarly: false });
+
     if (validation.error) {
       return response.status(422).send(validation.error.details.map(error => error.message));
     }
@@ -126,6 +129,7 @@ app.get('/messages', async (request, response) => {
     }
 
     let limitedMessages = filteredMessages.slice(filteredMessages.length - limit, filteredMessages.length);
+
     response.status(200).send(limitedMessages);
 
   } catch (error) {
@@ -150,6 +154,7 @@ app.post('/status', async (request, response) => {
         await db.collection('participants').deleteOne({ _id: participant._id });
       }
     });
+
     response.sendStatus(200);
 
   } catch (error) {
@@ -158,21 +163,52 @@ app.post('/status', async (request, response) => {
   }
 });
 
+app.put('messages/:id', async (request, response) => {
+  const { text } = request.body;
+  const { user } = request.headers;
+
+  try {
+    const validation = messageSchema.validate(request.body, { abortEarly: false });
+
+    if (validation.error) {
+      return response.status(422).send(validation.error.details.map(error => error.message));
+    }
+
+    const message = await db.collection('messages').findOne({ _id: new ObjectId(id) });
+
+    if (!message) {
+      return response.sendStatus(404);
+    } else if (message.from == !user) {
+      return response.sendStatus(401);
+    }
+
+    await db.collection('messages').updateOne({ _id: message._id },
+      { $set: { text: stripHtml(text).result.trim() } }
+    );
+
+    response.sendStatus(200);
+
+  } catch (error) {
+    console.error(error);
+    response.sendStatus(500);
+  }
+})
+
 app.delete('/messages/:id', async (request, response) => {
   const { user } = request.headers;
   const { id } = request.params;
 
   try {
     const message = await db.collection('messages').findOne({ _id: new ObjectId(id) });
+
     if (!message) {
       return response.sendStatus(404);
-    }
-
-    if (message.from == !user) {
+    } else if (message.from == !user) {
       return response.sendStatus(401);
     }
 
     await db.collection('messages').deleteOne({ _id: new ObjectId(id) });
+
     response.sendStatus(200);
 
   } catch (error) {
