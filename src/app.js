@@ -16,14 +16,14 @@ app.use(json());
 
 const time = dayjs().format('HH:mm:ss');
 
+const participantSchema = joi.object({
+  name: joi.string().required(),
+});
+
 const messageSchema = joi.object({
   to: joi.string().required(),
   text: joi.string().required(),
   type: joi.valid('message', 'private_message').required(),
-});
-
-const participantSchema = joi.object({
-  name: joi.string().required(),
 });
 
 const mongoClient = new MongoClient(process.env.MONGO_URI);
@@ -62,6 +62,7 @@ app.post('/participants', async (request, response) => {
     });
 
     response.sendStatus(201);
+
   } catch (error) {
     console.error(error);
     response.sendStatus(500);
@@ -72,6 +73,7 @@ app.get('/participants', async (request, response) => {
   try {
     const participants = await db.collection('participants').find().toArray();
     response.status(200).send(participants);
+
   } catch (error) {
     console.error(error);
     response.sendStatus(500);
@@ -103,6 +105,7 @@ app.post('/messages', async (request, response) => {
     });
 
     response.sendStatus(201);
+
   } catch (error) {
     console.error(error);
     response.sendStatus(500);
@@ -110,13 +113,20 @@ app.post('/messages', async (request, response) => {
 });
 
 app.get('/messages', async (request, response) => {
-
-  // ainda preciso pegar a length provida da URL para pode monstrar
-  // uma quantidade específica de mensagens. Se não houver, mostrar tudo
+  const user = request.header('User');
+  const limit = parseInt(request.header('limit'));
 
   try {
     const messages = await db.collection('messages').find().toArray();
-    response.send(messages);
+    const filteredMessages = messages.filter(message => message.from === user || message.to === user || message.to === 'Todos');
+
+    if (limit === undefined) {
+      return response.status(200).send(filteredMessages);
+    }
+
+    limitedMessages = filteredMessages.slice(filteredMessages.length - limit, filteredMessages.length);
+    response.status(200).send(limitedMessages);
+
   } catch (error) {
     console.error(error);
     response.sendStatus(500);
