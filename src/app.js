@@ -137,11 +137,11 @@ app.get('/messages', async (request, response) => {
   try {
     const filteredMessages = await db.collection('messages').find({ $or: [{ from: user }, { to: user }, { to: 'Todos' }] }).toArray();
 
-    if (!limit) {
+    if (limit === undefined) {
       return response.status(200).send(filteredMessages);
     }
 
-    response.status(200).send(filteredMessages.slice(-limit));
+    response.status(200).send(filteredMessages.slice(filteredMessages.length - limit, filteredMessages.length));
 
   } catch (error) {
     console.error(error);
