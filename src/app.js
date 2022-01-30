@@ -31,6 +31,23 @@ mongoClient.connect(() => {
   db = mongoClient.db("batePapoUOL_backEnd");
 });
 
+setInterval(async () => {
+  const participants = await db.collection('participants').find().toArray();
+
+  participants.forEach(async participant => {
+    if (Date.now() - participant.lastStatus > 10000) {
+      await db.collection('participants').deleteOne({ _id: participant._id });
+      await db.collection('messages').insertOne({
+        from: participant.name,
+        to: "Todos",
+        text: "sai da sala...",
+        type: "status",
+        time: dayjs().format('HH:mm:ss')
+      });
+    }
+  });
+}, 15000);
+
 app.post('/participants', async (request, response) => {
   const { name } = request.body;
 
@@ -97,8 +114,6 @@ app.post('/messages', async (request, response) => {
       return response.status(422).send(validation.error.details.map(error => error.message));
     }
 
-    await db.collection('participants').updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
-
     await db.collection('messages').insertOne({
       from: stripHtml(user).result.trim(),
       to: stripHtml(to).result.trim(),
@@ -120,17 +135,13 @@ app.get('/messages', async (request, response) => {
   const limit = parseInt(request.header.limit);
 
   try {
-    const messages = await db.collection('messages').find().toArray();
+    const filteredMessages = await db.collection('messages').find({ $or: [{ from: user }, { to: user }, { to: 'Todos' }] }).toArray();
 
-    const filteredMessages = messages.filter(message => message.from === user || message.to === user || message.to === 'Todos');
-
-    if (limit === undefined) {
+    if (!limit) {
       return response.status(200).send(filteredMessages);
     }
 
-    let limitedMessages = filteredMessages.slice(filteredMessages.length - limit, filteredMessages.length);
-
-    response.status(200).send(limitedMessages);
+    response.status(200).send(filteredMessages.slice(-limit));
 
   } catch (error) {
     console.error(error);
@@ -139,21 +150,16 @@ app.get('/messages', async (request, response) => {
 });
 
 app.post('/status', async (request, response) => {
+  const { user } = request.headers;
+
   try {
     const participants = await db.collection('participants').find({}).toArray();
 
-    participants.forEach(async participant => {
-      if (Date.now() - participant.lastStatus > 10000) {
-        await db.collection('messages').insertOne({
-          from: participant.name,
-          to: "Todos",
-          text: "sai da sala...",
-          type: "status",
-          time: dayjs().format('HH:mm:ss')
-        })
-        await db.collection('participants').deleteOne({ _id: participant._id });
-      }
-    });
+    if (!participants.find(participant => participant.name === user)) {
+      return response.sendStatus(404);
+    }
+
+    await db.collection('participants').updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
 
     response.sendStatus(200);
 
@@ -163,9 +169,10 @@ app.post('/status', async (request, response) => {
   }
 });
 
-app.put('messages/:id', async (request, response) => {
-  const { text } = request.body;
+app.put('/messages/:id', async (request, response) => {
+  const { to, text, type } = request.body;
   const { user } = request.headers;
+  const { id } = request.params;
 
   try {
     const validation = messageSchema.validate(request.body, { abortEarly: false });
@@ -178,12 +185,20 @@ app.put('messages/:id', async (request, response) => {
 
     if (!message) {
       return response.sendStatus(404);
-    } else if (message.from == !user) {
+    } else if (message.from !== user) {
       return response.sendStatus(401);
     }
 
-    await db.collection('messages').updateOne({ _id: message._id },
-      { $set: { text: stripHtml(text).result.trim() } }
+    await db.collection('messages').updateOne(
+      { _id: message._id },
+      {
+        $set: {
+          to: stripHtml(to).result.trim(),
+          text: stripHtml(text).result.trim(),
+          type: stripHtml(type).result.trim(),
+          time: dayjs().format('HH:mm:ss')
+        }
+      }
     );
 
     response.sendStatus(200);
@@ -192,7 +207,7 @@ app.put('messages/:id', async (request, response) => {
     console.error(error);
     response.sendStatus(500);
   }
-})
+});
 
 app.delete('/messages/:id', async (request, response) => {
   const { user } = request.headers;
@@ -203,7 +218,7 @@ app.delete('/messages/:id', async (request, response) => {
 
     if (!message) {
       return response.sendStatus(404);
-    } else if (message.from == !user) {
+    } else if (message.from !== user) {
       return response.sendStatus(401);
     }
 
@@ -215,6 +230,7 @@ app.delete('/messages/:id', async (request, response) => {
     console.error(error);
     response.sendStatus(500);
   }
+
 });
 
 app.listen(port, () => {
