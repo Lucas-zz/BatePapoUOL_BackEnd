@@ -1,6 +1,6 @@
 # BatePapoUOL BackEnd
 
-First ```backend``` project, building and API to the most used brazillian chat app ~~ages ago~~ - Bate Papo UOL!
+My first ```backend``` project! Building and API to the most used brazillian chat app ~~ages ago~~ - Bate Papo UOL!
 
 ## Table of Contents
 
@@ -173,7 +173,7 @@ mongosh
 
 5. Finally, start doing requests to the server
 
-6. Alternativelly, if you want a front-end app to see the API working, you can use:
+6. Alternatively, if you want a front-end app to see the API working, you can use:
 > https://github.com/Lucas-zz/BatePapoUOL_FrontEnd
 
 ## Author
