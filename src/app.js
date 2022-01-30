@@ -154,8 +154,9 @@ app.post('/status', async (request, response) => {
 
   try {
     const participants = await db.collection('participants').find({}).toArray();
+    const isOnline = participants.find(participant => participant.name === user);
 
-    if (!participants.find(participant => participant.name === user)) {
+    if (!isOnline) {
       return response.sendStatus(404);
     }
 
