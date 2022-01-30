@@ -1,5 +1,3 @@
----
-
 # BatePapoUOL BackEnd
 
 First ```backend``` project, building and API to the most used brazillian chat app ~~ages ago~~ - Bate Papo UOL!
@@ -18,7 +16,7 @@ First ```backend``` project, building and API to the most used brazillian chat a
 
 - POST ```/participants```
 
-Set your username to be used in the chat, you can send a .json body like this:
+Set a username in the data base, you can send a .json body like this:
 ```js
 {
   name: "YOUR_NAME_HERE"
@@ -28,7 +26,7 @@ Set your username to be used in the chat, you can send a .json body like this:
 
 - GET ```/participants```
 
-Get an array of every participant online at the moment. There will be an ID, the user name and a timestamp 'Date.now()' informing the user last status, like this:
+Get an array of every participant on the data base. There will be an ID, the username and a timestamp ```Date.now()``` informing the user last status, like this:
 ```js
 {
   _id: new ObjectId(NUMBER),
@@ -52,7 +50,7 @@ Insert a message in the collection of messages, specifing to whom the message is
 ```js
 request.post('EXAMPLE_URL/messages', body, {
   headers: {
-    User: username
+    User: RECEIVER
   }
 });
 ```
@@ -80,7 +78,7 @@ Delete a message informing its ObjectId in the request URL and the user name (on
 ```js
 request.delete(`EXAMPLE_URL/messages/:${id}`, {
   headers: {
-    User: username
+    User: SENDER
   }
 });
 ```
@@ -88,17 +86,17 @@ request.delete(`EXAMPLE_URL/messages/:${id}`, {
 
 - PUT ```/messages/:id```
 
-Request to change a specific message in the collection of messages imforming the messages' ObjectId on the URL, the same type of information sent in the POST ```/messages``` and the User in the headers of the request, like this:
+Request to change a specific message in the collection of messages informing the messages' ObjectId on the URL, the same type of information sent in the POST ```/messages``` and the User in the headers of the request, like this:
 
 ```js
 request.put(`EXEMPLE_URL/messages/${id}`,
   {
-    to: mensagem.to,
-    text: newMessage,
-    type: mensagem.type
+    to: RECEIVER,
+    text: "MESSAGE",
+    type: "TYPE_OF_MESSAGE"
   }, {
     headers: {
-      User: nome
+      User: SENDER
     }
   }
 );
@@ -184,5 +182,3 @@ mongosh
 - Frontend Mentor - [@Lucas-zz](https://www.frontendmentor.io/profile/Lucas-zz)
 - Gmail - [lucasazzollinivieira@gmail.com](mailto:lucasazzollinivieira@gmail.com)
 <!-- - Twitter - [@zulenno](https://twitter.com/zulenno) -->
-
----
