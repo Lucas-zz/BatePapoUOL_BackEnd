@@ -132,7 +132,7 @@ app.post('/messages', async (request, response) => {
 
 app.get('/messages', async (request, response) => {
   const { user } = request.headers;
-  const limit = parseInt(request.header.limit);
+  const limit = parseInt(request.query.limit);
 
   try {
     const filteredMessages = await db.collection('messages').find({ $or: [{ from: user }, { to: user }, { to: 'Todos' }] }).toArray();
