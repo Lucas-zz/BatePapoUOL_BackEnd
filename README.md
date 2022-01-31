@@ -26,7 +26,7 @@ Set a username in the data base, you can send a .json body like this:
 
 - GET ```/participants```
 
-Get an array of every participant on the data base. There will be an ID, the username and a timestamp ```Date.now()``` informing the user last status, like this:
+Get an array of every participant in the data base. There will be an ID, the username and a timestamp ```Date.now()``` informing the user last status, like this:
 ```js
 {
   _id: new ObjectId(NUMBER),
@@ -58,7 +58,7 @@ request.post('EXAMPLE_URL/messages', body, {
 
 - GET ```/messages```
 
-Get an array of objects with all messages in the collection of messages with the sender, the receiver, the type of message ("private_message", "message", "status"), the text and the timestamp of the message (HH:mm:ss) in the following format:
+Get an array of objects with all messages in the collection of messages with the sender, the receiver, the type of message ("private_message", "message", "status"), the text and the timestamp of the message (HH:mm:ss) in the following way:
 ```js
   [
     {
@@ -86,7 +86,7 @@ request.delete(`EXAMPLE_URL/messages/:${id}`, {
 
 - PUT ```/messages/:id```
 
-Request to change a specific message in the collection of messages informing the messages' ObjectId on the URL, the same type of information sent in the POST ```/messages``` and the User in the headers of the request, like this:
+Request to change a specific message in the collection of messages informing the messages' ObjectId in the URL. The API will be waiting for the same type of information sent in the POST ```/messages``` and the User in the headers of the request, like this:
 
 ```js
 request.put(`EXEMPLE_URL/messages/${id}`,
@@ -108,7 +108,7 @@ request.put(`EXEMPLE_URL/messages/${id}`,
 - POST ```/status```
 
 Every 15 seconds, the API will check the lastStatus of every user for an update older than 10 seconds and if confirmed, it'll remove the user from the DB.
-With this route it's possible to keep updating the user timestamp. Like before, the User needs to be specified through the request's headers:
+With this route, it's possible to keep updating the user timestamp. Like before, the User needs to be specified through the request's headers:
 
 ### Data Sanitization
 
@@ -135,7 +135,6 @@ The following tools and libs were used in the construction of the project: <br /
   <img style='margin: 5px;' src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white">
 </p>
 
-
 ## How to run
 
 ### You will need:
@@ -154,20 +153,18 @@ The following tools and libs were used in the construction of the project: <br /
 npm i
 ```
 
-
 3. Start the server
 ```bash
 mongod --dbpath ~/.mongo
 ```
   *For more information about MongoDB, access its [Documentation](https://docs.mongodb.com/)*.
 
-
 4. Start the data base app
 ```bash
 mongo
 mongosh
 ```
-  *Obs: open another terminal and use one of the commands shown above*
+*Obs: open another terminal and use one of the commands above*
   
 6. Get the URL shown on ```Connected to: mongodb://XXX.X.X.X:XXXXX/``` and copy it into the **.env** file as ```MONGO_URI=<URL>```
 
