@@ -107,7 +107,7 @@ request.put(`EXEMPLE_URL/messages/${id}`,
 - POST ```/status```
 
 Every 15 seconds, the API will check the lastStatus of every user for a status that wasn't updated in the last 10 seconds and if confirmed, it'll remove the user from the DB.
-With this route, it's possible to keep updating the user timestamp (lastStatus). Like before, the User needs to be specified through the request's headers:
+With this route, it's possible to keep updating the user timestamp (lastStatus). Like before, the User needs to be specified through the request's headers.
 
 ### Data Sanitization
 
