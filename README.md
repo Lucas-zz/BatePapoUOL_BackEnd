@@ -1,6 +1,6 @@
 # BatePapoUOL BackEnd
 
-My first ```backend``` project! Building and API to the most used brazillian chat app ~~ages ago~~ - Bate Papo UOL!
+My first ```backend``` project! Building an API to the most used brazillian chat app ~~ages ago~~ - Bate Papo UOL!
 
 ## Table of Contents
 
