@@ -46,7 +46,7 @@ Insert a message in the collection of messages, specifing to whom the message is
   text: "MESSAGE"
 }
 ```
-*You'll need to imform the receiver of the message as User in the request's headers:*
+**You'll need to inform the receiver of the message as User in the request's headers:*
 ```js
 request.post('EXAMPLE_URL/messages', body, {
   headers: {
@@ -74,7 +74,7 @@ Get an array of objects with all messages in the collection of messages with the
 
 - DELETE ```/messages/:id```
 
-Delete a message informing its ObjectId in the request URL and the user name (only the sender of a message is able to delete it) in the request's headers as User, like this:
+Delete a message sending its ObjectId in the request URL and the username (only the sender of a message is able to delete it) in the request's headers as User, like this:
 ```js
 request.delete(`EXAMPLE_URL/messages/${id}`, {
   headers: {
@@ -86,7 +86,7 @@ request.delete(`EXAMPLE_URL/messages/${id}`, {
 
 - PUT ```/messages/:id```
 
-Request to change a specific message in the collection of messages informing the messages' ObjectId in the URL. The API will be waiting for the same type of information sent in the POST ```/messages``` and the User in the headers of the request, like this:
+Request to change a specific message in the collection of messages informing the messages' ObjectId in the URL. The API will be waiting for the same type of information sent in the POST ```/messages``` and the User (only the sender of said message is able to update it) in the headers of the request, like this:
 
 ```js
 request.put(`EXEMPLE_URL/messages/${id}`,
@@ -101,14 +101,13 @@ request.put(`EXEMPLE_URL/messages/${id}`,
   }
 );
 ```
-*Obs: only the sender of said message is able to delete it.*
 
 <br />
 
 - POST ```/status```
 
-Every 15 seconds, the API will check the lastStatus of every user for an update older than 10 seconds and if confirmed, it'll remove the user from the DB.
-With this route, it's possible to keep updating the user timestamp. Like before, the User needs to be specified through the request's headers:
+Every 15 seconds, the API will check the lastStatus of every user for a status that wasn't updated in the last 10 seconds and if confirmed, it'll remove the user from the DB.
+With this route, it's possible to keep updating the user timestamp (lastStatus). Like before, the User needs to be specified through the request's headers:
 
 ### Data Sanitization
 
@@ -159,12 +158,12 @@ mongod --dbpath ~/.mongo
 ```
   *For more information about MongoDB, access its [Documentation](https://docs.mongodb.com/)*.
 
-4. Start the data base app
+4. Start the data base app*
 ```bash
 mongo
 mongosh
 ```
-*Obs: open another terminal and use one of the commands above*
+**Obs: open another terminal and use one of the commands above*
   
 6. Get the URL shown on ```Connected to: mongodb://XXX.X.X.X:XXXXX/``` and copy it into the **.env** file as ```MONGO_URI=<URL>```
 
