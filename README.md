@@ -26,7 +26,7 @@ Set a username in the data base, you can send a .json body like this:
 
 - GET ```/participants```
 
-Get an array of every participant in the data base. There will be an ID, the username and a timestamp ```Date.now()``` informing the user last status, like this:
+Get an array of every participant in the data base. There will be an ID, the username and a timestamp ```Date.now()``` informing the user last status in the following way:
 ```js
 {
   _id: new ObjectId(NUMBER),
