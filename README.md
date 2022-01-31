@@ -76,7 +76,7 @@ Get an array of objects with all messages in the collection of messages with the
 
 Delete a message informing its ObjectId in the request URL and the user name (only the sender of a message is able to delete it) in the request's headers as User, like this:
 ```js
-request.delete(`EXAMPLE_URL/messages/:${id}`, {
+request.delete(`EXAMPLE_URL/messages/${id}`, {
   headers: {
     User: SENDER
   }
