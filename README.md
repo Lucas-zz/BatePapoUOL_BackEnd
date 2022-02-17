@@ -166,7 +166,7 @@ mongod --dbpath ~/.mongo
 mongo
 mongosh
 ```
-**Obs: open another terminal and use one of the commands above*
+**Obs: open ANOTHER terminal and use one of the commands above (don't close or change the 3rd point terminal)*
   
 6. Get the URL shown on ```Connected to: mongodb://XXX.X.X.X:XXXXX/``` and copy it into the **.env** file as ```MONGO_URI=<URL>```
 
